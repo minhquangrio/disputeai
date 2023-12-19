@@ -1,5 +1,9 @@
 import telebot
 import datetime
+import bard
+from libraries import bard
+
+
 
 # Mở file token.txtpy 
 with open("token.txt", "r") as f:
@@ -7,16 +11,29 @@ with open("token.txt", "r") as f:
 
 # Tạo bot
 bot = telebot.TeleBot(token)
+def send_request_to_bard(text):
+    response = bard.query(text)
+    return response
 
-# Xử lý tin nhắn
-@bot.message_handler(commands=['start', 'help', 'time', 'get_group_info'])
+
+@bot.message_handler(commands=['start', 'help', 'time', 'get_group_info','get_channel_info','get_group_members','chat_with_bard'])
 def start(message):
     if message.text == '/start':
         bot.send_message(message.chat.id, 'Xin chào! Tôi là bot Telegram được tạo bằng Python.')
     elif message.text == '/help':
         bot.send_message(message.chat.id, 'Có thể làm gì với tôi?')
+    elif message.text == '/chat_with_bard':
+        # Gửi yêu cầu đến Bard
+        response = send_request_to_bard(message.text)
+
+        # Gửi trả lời cho người dùng
+        bot.send_message(message.chat.id, response)
     else:
         bot.send_message(message.chat.id, 'Bạn muốn biết thời gian hiện tại không?')
+
+
+
+
 
 # Xử lý tin nhắn thời gian
 @bot.message_handler(commands=['time'])
@@ -61,6 +78,27 @@ def get_group_members(message):
 
     # Gửi số lượng thành viên cho người dùng
     bot.send_message(message.chat.id, 'Số lượng thành viên trong nhóm này là: {}'.format(group_members_count))
+
+def send_message_at_time(channel_id, message, time):
+    now = datetime.datetime.now()
+    if now.strftime('%H:%M:%S') == time:
+        bot.send_message(channel_id, message)
+
+# Thêm hàm vào hàm xử lý tin nhắn
+@bot.message_handler(commands=['send_message_at_time'])
+def send_message_at_time_handler(message):
+    # Lấy ID của kênh hoặc nhóm
+    channel_id = message.chat.id
+
+    # Lấy nội dung tin nhắn
+    message = message.text
+
+    # Lấy thời gian được cài đặt
+    time = message.split(' ')[1]
+
+    # Gọi hàm gửi tin nhắn
+    send_message_at_time(channel_id, message, time)
+
 
 
 
